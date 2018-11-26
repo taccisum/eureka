@@ -56,10 +56,11 @@ public class ZoneAffinityClusterResolver implements ClusterResolver<AwsEndpoint>
     @Override
     public List<AwsEndpoint> getClusterEndpoints() {
         List<AwsEndpoint>[] parts = ResolverUtils.splitByZone(delegate.getClusterEndpoints(), myZone);
-        List<AwsEndpoint> myZoneEndpoints = parts[0];
+        List<AwsEndpoint> myZoneEndpoints = parts[0];   // myZone是配置zone set中的第一个zone
         List<AwsEndpoint> remainingEndpoints = parts[1];
         List<AwsEndpoint> randomizedList = randomizeAndMerge(myZoneEndpoints, remainingEndpoints);
         if (!zoneAffinity) {
+            // 非zone亲和，reverse数组，把非my zone放到第一位
             Collections.reverse(randomizedList);
         }
 

@@ -30,7 +30,7 @@ import static com.netflix.discovery.EurekaClientNames.METRIC_RESOLVER_PREFIX;
 public class AsyncResolver<T extends EurekaEndpoint> implements ClosableResolver<T> {
     private static final Logger logger = LoggerFactory.getLogger(AsyncResolver.class);
 
-    // Note that warm up is best effort. If the resolver is accessed by multiple threads pre warmup,
+    // Note that warm up is best efforteffort. If the resolver is accessed by multiple threads pre warmup,
     // only the first thread will block for the warmup (up to the configurable timeout).
     private final AtomicBoolean warmedUp = new AtomicBoolean(false);
     private final AtomicBoolean scheduled = new AtomicBoolean(false);

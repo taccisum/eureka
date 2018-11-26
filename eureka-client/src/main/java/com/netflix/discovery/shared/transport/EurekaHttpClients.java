@@ -141,6 +141,7 @@ public final class EurekaHttpClients {
                 true
         );
 
+        // 初始化时执行一次解析
         List<AwsEndpoint> initialValue = delegateResolver.getClusterEndpoints();
         if (initialValue.isEmpty()) {
             String msg = "Initial resolution of Eureka server endpoints failed. Check ConfigClusterResolver logs for more info";
@@ -158,6 +159,8 @@ public final class EurekaHttpClients {
     }
 
     /**
+     * 组合解析器，用于 Eureka 1.x 对 Eureka 2.x 的兼容配置
+     *
      * @return a bootstrap resolver that resolves eureka server endpoints via a remote call to a "vip source"
      *         the local registry, where the source is found from a rootResolver (dns or config)
      */

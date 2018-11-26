@@ -35,11 +35,13 @@ public class ConfigClusterResolver implements ClusterResolver<AwsEndpoint> {
     @Override
     public List<AwsEndpoint> getClusterEndpoints() {
         if (clientConfig.shouldUseDnsForFetchingServiceUrls()) {
+            // 通过dns获取集群endpoints
             if (logger.isInfoEnabled()) {
                 logger.info("Resolving eureka endpoints via DNS: {}", getDNSName());
             }
             return getClusterEndpointsFromDns();
         } else {
+            // 通过配置的方式获取集群endpoints
             logger.info("Resolving eureka endpoints via configuration");
             return getClusterEndpointsFromConfig();
         }
