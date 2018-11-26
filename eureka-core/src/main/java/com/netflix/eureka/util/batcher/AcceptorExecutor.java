@@ -136,11 +136,13 @@ class AcceptorExecutor<ID, T> {
         trafficShaper.registerFailure(processingResult);
     }
 
+    // 用于单任务处理
     BlockingQueue<TaskHolder<ID, T>> requestWorkItem() {
         singleItemWorkRequests.release();
         return singleItemWorkQueue;
     }
 
+    // 用于批量任务处理
     BlockingQueue<List<TaskHolder<ID, T>>> requestWorkItems() {
         batchWorkRequests.release();
         return batchWorkQueue;
@@ -307,6 +309,7 @@ class AcceptorExecutor<ID, T> {
                         batchWorkRequests.release();
                     } else {
                         batchSizeMetric.record(holders.size(), TimeUnit.MILLISECONDS);
+                        // 添加到batch队列，供task executor获取并处理
                         batchWorkQueue.add(holders);
                     }
                 }
@@ -323,6 +326,7 @@ class AcceptorExecutor<ID, T> {
 
             TaskHolder<ID, T> nextHolder = pendingTasks.get(processingOrder.peek());
             long delay = System.currentTimeMillis() - nextHolder.getSubmitTimestamp();
+            // PeerEurekaNode.MAX_BATCHING_DELAY_MS，固定为500ms
             return delay >= maxBatchingDelay;
         }
     }

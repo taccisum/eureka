@@ -196,6 +196,7 @@ class TaskExecutors<ID, T> {
                             break;
                         case Congestion:
                         case TransientError:
+                            // 处理失败，放入reprocess队列
                             taskDispatcher.reprocess(holders, result);
                             break;
                         case PermanentError:
