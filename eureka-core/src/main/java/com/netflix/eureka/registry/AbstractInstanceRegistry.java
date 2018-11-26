@@ -89,6 +89,12 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
     private ConcurrentLinkedQueue<RecentlyChangedItem> recentlyChangedQueue = new ConcurrentLinkedQueue<RecentlyChangedItem>();
 
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+    /**
+     * 个人理解：
+     * 这两把锁不是为了锁住对实例的读写操作，而是为了使得{@link #getApplicationDeltasFromMultipleRegions}操作与其它写操作互斥。
+     * 也因此，为了性能考虑，eureka对于数量较多的写操作使用了读锁，保证这些写操作可以并发进行（这些写操作均使用了其它方案确保线程安全），
+     * 而对数量较少的读操作使用了写锁。
+     */
     private final Lock read = readWriteLock.readLock();
     private final Lock write = readWriteLock.writeLock();
     protected final Object lock = new Object();
@@ -195,6 +201,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
             REGISTER.increment(isReplication);
             if (gMap == null) {
                 final ConcurrentHashMap<String, Lease<InstanceInfo>> gNewMap = new ConcurrentHashMap<String, Lease<InstanceInfo>>();
+                // 因为这段操作没有使用锁，因此putIfAbsent可能返回其它线程赋予的值
                 gMap = registry.putIfAbsent(registrant.getAppName(), gNewMap);
                 if (gMap == null) {
                     gMap = gNewMap;
@@ -466,6 +473,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
             if (lease == null) {
                 return false;
             } else {
+                // 更新租约
                 lease.renew();
                 InstanceInfo info = lease.getHolder();
                 // Lease is always created with its instance info object.
@@ -857,7 +865,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
      * must make sure this does not adversely affect them.
      *
      * @return all application deltas.
-     * @deprecated use {@link #getApplicationDeltasFromMultipleRegions(String[])} instead. This method has a
+     * @deprecated use {@link #(String[])} instead. This method has a
      * flawed behavior of transparently falling back to a remote region if no instances for an app is available locally.
      * The new behavior is to explicitly specify if you need a remote region.
      */

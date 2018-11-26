@@ -376,6 +376,7 @@ public class DiscoveryClient implements EurekaClient {
                             .setDaemon(true)
                             .build());
 
+            // 初始化executor，将在initScheduledTasks()中用来执行定时任务
             heartbeatExecutor = new ThreadPoolExecutor(
                     1, clientConfig.getHeartbeatExecutorThreadPoolSize(), 0, TimeUnit.SECONDS,
                     new SynchronousQueue<Runnable>(),
@@ -412,6 +413,7 @@ public class DiscoveryClient implements EurekaClient {
         }
 
         if (clientConfig.shouldFetchRegistry() && !fetchRegistry(false)) {
+            // fetch失败，从备份中获取注册信息
             fetchRegistryFromBackup();
         }
 
@@ -1090,14 +1092,16 @@ public class DiscoveryClient implements EurekaClient {
         if (delta == null) {
             logger.warn("The server does not allow the delta revision to be applied because it is not safe. "
                     + "Hence got the full registry.");
+            // 获取增量注册信息失败，则执行全量获取
             getAndStoreFullRegistry();
         } else if (fetchRegistryGeneration.compareAndSet(currentUpdateGeneration, currentUpdateGeneration + 1)) {
             logger.debug("Got delta update with apps hashcode {}", delta.getAppsHashCode());
             String reconcileHashCode = "";
+            // fetch registry是通过定时任务去执行的，应该不会有竞争，为什么要上锁？
             if (fetchRegistryUpdateLock.tryLock()) {
                 try {
                     updateDelta(delta);
-                    reconcileHashCode = getReconcileHashCode(applications);
+                    reconcileHashCode = getReconcileHashCode(applications); // 计算当前apps的reconcile hash code
                 } finally {
                     fetchRegistryUpdateLock.unlock();
                 }
@@ -1105,6 +1109,8 @@ public class DiscoveryClient implements EurekaClient {
                 logger.warn("Cannot acquire update lock, aborting getAndUpdateDelta");
             }
             // There is a diff in number of instances for some reason
+            // TODO::??为什么用reconcile hash code与apps hash code比较？
+            // 这里获取到的delta.appsHashCode其实是全量应用集合的值
             if (!reconcileHashCode.equals(delta.getAppsHashCode()) || clientConfig.shouldLogDeltaDiff()) {
                 reconcileAndLogDifference(delta, reconcileHashCode);  // this makes a remoteCall
             }

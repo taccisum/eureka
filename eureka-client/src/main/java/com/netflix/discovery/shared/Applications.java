@@ -80,6 +80,9 @@ public class Applications {
 
     private static final String STATUS_DELIMITER = "_";
 
+    /**
+     * 这个appsHashCode一般就是通过{@link #getReconcileHashCode()}计算后赋值的，两者是同一个值
+     */
     private String appsHashCode;
     private Long versionDelta;
     @XStreamImplicit
@@ -223,6 +226,7 @@ public class Applications {
     }
 
     /**
+     * 计算用于客户端和服务端进行数据一致性校验的hash code
      * Gets the hash code for this <em>applications</em> instance. Used for
      * comparison of instances between eureka server and eureka client.
      *
@@ -263,6 +267,8 @@ public class Applications {
      * @return the hash code for this instance
      */
     public static String getReconcileHashCode(Map<String, AtomicInteger> instanceCountMap) {
+        // reconcile hash code = ${status}_${count}_
+        // 举个例子，8 个 UP ，0 个 DOWN ，则 appsHashCode = UP_8_ 。8 个 UP ，2 个 DOWN ，则 appsHashCode = DOWN_2_UP_8_
         StringBuilder reconcileHashCode = new StringBuilder(75);
         for (Map.Entry<String, AtomicInteger> mapEntry : instanceCountMap.entrySet()) {
             reconcileHashCode.append(mapEntry.getKey()).append(STATUS_DELIMITER).append(mapEntry.getValue().get())

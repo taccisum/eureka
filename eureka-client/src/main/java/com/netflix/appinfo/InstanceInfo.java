@@ -311,7 +311,7 @@ public class InstanceInfo {
         DOWN, // Do not send traffic- healthcheck callback failed
         STARTING, // Just about starting- initializations to be done - do not
         // send traffic
-        OUT_OF_SERVICE, // Intentionally shutdown for traffic
+        OUT_OF_SERVICE, // Intentionally shutdown for traffic   有意地停止服务
         UNKNOWN;
 
         public static InstanceStatus toEnum(String s) {
