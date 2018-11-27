@@ -131,6 +131,7 @@ public class RedirectingEurekaHttpClient extends EurekaHttpClientDecorator {
             }
 
             currentHttpClientRef.getAndSet(null).shutdown();
+            // endpoint失败了，这里找到一个新的endpoint，等下一次循环时将请求这个endpoint
             currentHttpClientRef.set(factory.newClient(new DefaultEndpoint(targetUrl.toString())));
         }
         String message = "Follow redirect limit crossed for URI " + serviceEndpoint.getServiceUrl();

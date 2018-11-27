@@ -32,6 +32,8 @@ import org.slf4j.LoggerFactory;
 import static com.netflix.discovery.EurekaClientNames.METRIC_TRANSPORT_PREFIX;
 
 /**
+ * 定时重建会话，防止客户端永远只请求一个特定的server
+ *
  * {@link SessionedEurekaHttpClient} enforces full reconnect at a regular interval (a session), preventing
  * a client to sticking to a particular Eureka server instance forever. This in turn guarantees even
  * load distribution in case of cluster topology change.
@@ -63,6 +65,7 @@ public class SessionedEurekaHttpClient extends EurekaHttpClientDecorator {
     protected <R> EurekaHttpResponse<R> execute(RequestExecutor<R> requestExecutor) {
         long now = System.currentTimeMillis();
         long delay = now - lastReconnectTimeStamp;
+        // 如果过期了就shutdown并创建新的client
         if (delay >= currentSessionDurationMs) {
             logger.debug("Ending a session and starting anew");
             lastReconnectTimeStamp = now;

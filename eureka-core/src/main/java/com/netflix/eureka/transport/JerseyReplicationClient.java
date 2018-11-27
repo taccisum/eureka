@@ -33,6 +33,8 @@ import org.slf4j.LoggerFactory;
 import static com.netflix.discovery.shared.transport.EurekaHttpResponse.anEurekaHttpResponse;
 
 /**
+ * 这个是server之间通讯的客户端
+ *
  * @author Tomasz Bak
  */
 public class JerseyReplicationClient extends AbstractJerseyEurekaHttpClient implements HttpReplicationClient {
