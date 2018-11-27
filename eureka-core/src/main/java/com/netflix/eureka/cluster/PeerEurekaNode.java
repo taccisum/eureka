@@ -100,7 +100,9 @@ public class PeerEurekaNode {
         this.maxProcessingDelayMs = config.getMaxTimeForReplication();
 
         String batcherName = getBatcherName();
+        // 创建replication task processor，用于处理同步任务
         ReplicationTaskProcessor taskProcessor = new ReplicationTaskProcessor(targetHost, replicationClient);
+        // 创建同步多任务分发器
         this.batchingDispatcher = TaskDispatchers.createBatchingTaskDispatcher(
                 batcherName,
                 config.getMaxElementsInPeerReplicationPool(),
@@ -111,6 +113,7 @@ public class PeerEurekaNode {
                 retrySleepTimeMs,
                 taskProcessor
         );
+        // 创建同步单任务分发器，主要用于AWS
         this.nonBatchingDispatcher = TaskDispatchers.createNonBatchingTaskDispatcher(
                 targetHost,
                 config.getMaxElementsInStatusReplicationPool(),
@@ -133,6 +136,7 @@ public class PeerEurekaNode {
      */
     public void register(final InstanceInfo info) throws Exception {
         long expiryTime = System.currentTimeMillis() + getLeaseRenewalOf(info);
+        // 这里通过任务分发器将同步任务分发到acceptorQueue，worker线程（由TaskExecutors开启的）会从队列中获取到任务并交由ReplicationTaskProcessor处理
         batchingDispatcher.process(
                 taskId("register", info),
                 new InstanceReplicationTask(targetHost, Action.Register, info, null, true) {
@@ -383,6 +387,8 @@ public class PeerEurekaNode {
     }
 
     private static String taskId(String requestType, String appName, String id) {
+        // 同一实例发出的同一操作会生成相同的任务id
+        // 如果执行任务的端挂了，在应用恢复后，根据任务id来合并任务可以有效地减少积压任务
         return requestType + '#' + appName + '/' + id;
     }
 

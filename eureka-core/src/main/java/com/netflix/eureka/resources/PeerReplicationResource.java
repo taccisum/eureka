@@ -80,6 +80,7 @@ public class PeerReplicationResource {
     public Response batchReplication(ReplicationList replicationList) {
         try {
             ReplicationListResponse batchResponse = new ReplicationListResponse();
+            // 批量提交，逐个处理
             for (ReplicationInstance instanceInfo : replicationList.getReplicationList()) {
                 try {
                     batchResponse.addResponse(dispatch(instanceInfo));
@@ -135,7 +136,7 @@ public class PeerReplicationResource {
     }
 
     private static Builder handleRegister(ReplicationInstance instanceInfo, ApplicationResource applicationResource) {
-        applicationResource.addInstance(instanceInfo.getInstanceInfo(), REPLICATION);
+        applicationResource.addInstance(instanceInfo.getInstanceInfo(), REPLICATION);   // 第二个参数是REPLICATION，防止又重复向其它节点复制
         return new Builder().setStatusCode(Status.OK.getStatusCode());
     }
 
