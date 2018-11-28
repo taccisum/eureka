@@ -326,6 +326,7 @@ public class DiscoveryClient implements EurekaClient {
 
         this.backupRegistryProvider = backupRegistryProvider;
 
+        // TODO:: url randomizer，用于打乱service urls的？暂不了解
         this.urlRandomizer = new EndpointUtils.InstanceInfoBasedUrlRandomizer(instanceInfo);
         localRegionApps.set(new Applications());
 
@@ -349,6 +350,7 @@ public class DiscoveryClient implements EurekaClient {
         logger.info("Initializing Eureka in region {}", clientConfig.getRegion());
 
         if (!config.shouldRegisterWithEureka() && !config.shouldFetchRegistry()) {
+            // 不需要注册也不需要从server拉取注册信息
             logger.info("Client configured to neither register nor query for data.");
             scheduler = null;
             heartbeatExecutor = null;
@@ -396,8 +398,10 @@ public class DiscoveryClient implements EurekaClient {
             );  // use direct handoff
 
             eurekaTransport = new EurekaTransport();
+            // 启动与server endpoints解析相关的定时任务
             scheduleServerEndpointTask(eurekaTransport, args);
 
+            // Az: availability zone
             AzToRegionMapper azToRegionMapper;
             if (clientConfig.shouldUseDnsForFetchingServiceUrls()) {
                 azToRegionMapper = new DNSBasedAzToRegionMapper(clientConfig);
@@ -1309,6 +1313,7 @@ public class DiscoveryClient implements EurekaClient {
                     } else {
                         logger.info("Saw local status change event {}", statusChangeEvent);
                     }
+                    // 状态更新的时候触发实时更新
                     instanceInfoReplicator.onDemandUpdate();
                 }
             };
