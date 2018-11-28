@@ -1109,7 +1109,6 @@ public class DiscoveryClient implements EurekaClient {
                 logger.warn("Cannot acquire update lock, aborting getAndUpdateDelta");
             }
             // There is a diff in number of instances for some reason
-            // TODO::??为什么用reconcile hash code与apps hash code比较？
             // 这里获取到的delta.appsHashCode其实是全量应用集合的值
             if (!reconcileHashCode.equals(delta.getAppsHashCode()) || clientConfig.shouldLogDeltaDiff()) {
                 reconcileAndLogDifference(delta, reconcileHashCode);  // this makes a remoteCall
