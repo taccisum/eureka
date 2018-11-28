@@ -62,6 +62,7 @@ public class RateLimiterTest {
 
     private void testBursts(RateLimiter rateLimiter, long start, int burstSize, int averageRate, long step) {
         // Generate burst, and go above the limit
+        // start为当前时间，这个用例表示测试同一毫秒内获取到的token数量不能超过burst size
         assertTrue(rateLimiter.acquire(burstSize, averageRate, start));
         assertTrue(rateLimiter.acquire(burstSize, averageRate, start));
         assertFalse(rateLimiter.acquire(burstSize, averageRate, start));

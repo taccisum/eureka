@@ -37,6 +37,7 @@ public class RateLimiter {
 
     private final long rateToMsConversion;
 
+    // 表示当前桶中的已被消费的令牌数量
     private final AtomicInteger consumedTokens = new AtomicInteger();
     private final AtomicLong lastRefillTime = new AtomicLong(0);
 
@@ -58,6 +59,11 @@ public class RateLimiter {
         }
     }
 
+    /**
+     *
+     * @param burstSize 令牌桶上限
+     * @param averageRate 令牌再装平均速率（单位：每毫秒）
+     */
     public boolean acquire(int burstSize, long averageRate) {
         return acquire(burstSize, averageRate, System.currentTimeMillis());
     }
@@ -67,6 +73,7 @@ public class RateLimiter {
             return true;
         }
 
+        // 获取令牌的时候才执行填充，可以有效地减少计算
         refillToken(burstSize, averageRate, currentTimeMillis);
         return consumeToken(burstSize);
     }
@@ -75,15 +82,21 @@ public class RateLimiter {
         long refillTime = lastRefillTime.get();
         long timeDelta = currentTimeMillis - refillTime;
 
-        long newTokens = timeDelta * averageRate / rateToMsConversion;
+        long newTokens = timeDelta * averageRate / rateToMsConversion;  // 应新增的令牌数=令牌填装速率*时间增量/时间单位（分钟/秒）毫秒数
         if (newTokens > 0) {
+            // 重新计算最后的填充时间
             long newRefillTime = refillTime == 0
                     ? currentTimeMillis
+                    // TODO::这里为什么又要重新计算一遍？
                     : refillTime + newTokens * rateToMsConversion / averageRate;
+            // CAS失败说明已经有其它线程进行填充或消费了，当前线程可以直接放弃
             if (lastRefillTime.compareAndSet(refillTime, newRefillTime)) {
                 while (true) {
                     int currentLevel = consumedTokens.get();
+                    // current level有可能大于burst size，因为burst size是可以动态调整的（传参）
+                    // 如果burst size小于current level，那么以burst size为当前桶消费的token量
                     int adjustedLevel = Math.min(currentLevel, burstSize); // In case burstSize decreased
+                    // 因为consumed tokens表示的是桶中已消费的token数，减少值就相当于填充了新的token，最小至0
                     int newLevel = (int) Math.max(0, adjustedLevel - newTokens);
                     if (consumedTokens.compareAndSet(currentLevel, newLevel)) {
                         return;

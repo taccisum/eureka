@@ -131,6 +131,7 @@ public class RateLimitingFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         Target target = getTarget(request);
         if (target == Target.Other) {
+            // 不做限流的请求类型
             chain.doFilter(request, response);
             return;
         }
@@ -139,6 +140,7 @@ public class RateLimitingFilter implements Filter {
 
         if (isRateLimited(httpRequest, target)) {
             incrementStats(target);
+            // TODO::为什么先判断是否过载（在isRateLimited的isOverloaded方法）再判断是否enabled？不是无谓的计算？
             if (serverConfig.isRateLimiterEnabled()) {
                 ((HttpServletResponse) response).setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
                 return;
@@ -174,6 +176,7 @@ public class RateLimitingFilter implements Filter {
 
     private boolean isRateLimited(HttpServletRequest request, Target target) {
         if (isPrivileged(request)) {
+            // 特权应用不限流
             logger.debug("Privileged {} request", target);
             return false;
         }
